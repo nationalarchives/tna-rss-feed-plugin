@@ -4,9 +4,11 @@
  */
 
 $args = array(
-    'category_name' => 'Audio'
+    'category_name' => 'Audio',
+    'numberposts' => -1
 );
-$the_query = new WP_Query( $args );
+
+$the_query = get_posts($args);
 
 header('Content-Type: '.feed_content_type('rss-http').'; charset='.get_option('blog_charset'), true);
 echo '<?xml version="1.0" encoding="'.get_option('blog_charset').'"?'.'>';
@@ -19,8 +21,8 @@ echo '<?xml version="1.0" encoding="'.get_option('blog_charset').'"?'.'>';
      xmlns:atom="http://www.w3.org/2005/Atom"
      xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
      xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
-    xmlns:itunes="http://www.itunes.com/DTDs/Podcast-1.0.dtd">
-    <?php do_action('rss2_ns'); ?>>
+     xmlns:itunes="http://www.itunes.com/DTDs/Podcast-1.0.dtd">
+    <?php do_action('rss2_ns'); ?>
     <channel>
         <title><?php bloginfo_rss('name'); ?></title>
         <link href="<?php self_link(); ?>" rel="self" type="application/rss+xml" />
@@ -51,42 +53,39 @@ echo '<?xml version="1.0" encoding="'.get_option('blog_charset').'"?'.'>';
 
         <?php
         do_action('rss2_head');
-        if ( $the_query->have_posts() ) {
-            while ( $the_query->have_posts() ) {
-                $the_query->the_post(); ?>
-                <item>
-                    <title><?php the_title_rss(); ?></title>
-                    <description>
+        foreach ($the_query as $post){ ?>
+            <item>
+                <title><?php the_title_rss(); ?></title>
+                <description><![CDATA[
                     <?php
-                    $content = get_the_content();
+                    $content = $post->post_content;
                     $content_clean = strip_tags($content);
                     echo $content_clean;
-                    ?>
-                    </description>
-                    <itunes:author><?php the_author() ?></itunes:author>
-                    <pubDate><?php echo mysql2date('D, d M Y H:i:s +0000', get_post_time('Y-m-d H:i:s', true), false); ?></pubDate>
-                    <enclosure><?php rss_enclosure() ?></enclosure>
-                    <guid><?php the_guid(); ?></guid>
-                    <itunes:explicit>no</itunes:explicit>
-                    <itunes:duration><?php echo get_post_custom_values('duration')[0] ?></itunes:duration>
-                    <itunes:keywords>
+                    ?>]]>
+                </description>
+                <itunes:author><?php echo $post->post_author ?></itunes:author>
+                <pubDate><?php echo $post->post_date ?></pubDate>
+                <enclosure><?php echo get_post_meta( $post->ID, $key = 'enclosure',true) ?></enclosure>
+                <guid><?php echo $post->guid ?></guid>
+                <itunes:explicit>no</itunes:explicit>
+                <itunes:duration><?php echo get_post_meta( $post->ID, $key = 'duration',true) ?></itunes:duration>
+                <itunes:keywords>
                     <?php
                     $tagArray = array();
-                    $tags = get_the_tags(get_the_ID());
+                    $tags = get_the_tags($post->ID);
                     foreach($tags as $tag){
                         array_push($tagArray, $tag->name);
                     }
                     echo implode(', ', $tagArray);
                     ?>
-                    </itunes:keywords>
-                    <?php
-                    $categories = get_the_category();
-                    foreach($categories as $index){ ?>
-                        <category><?php print_r($index->cat_name)?></category>
-                    <?php } ?>
-                    <?php do_action('rss2_item'); ?>
-                </item>
-            <?php }
-        } ?>
+                </itunes:keywords>
+                <?php
+                $categories = get_the_category($post->ID);
+                foreach($categories as $index){ ?>
+                    <category><?php print_r($index->cat_name)?></category>
+                <?php } ?>
+                <?php do_action('rss2_item'); ?>
+            </item>
+        <?php } ?>
     </channel>
 </rss>
