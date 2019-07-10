@@ -22,7 +22,7 @@ echo '<?xml version="1.0" encoding="'.get_option('blog_charset').'"?'.'>';
      xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
      xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
      xmlns:itunes="http://www.itunes.com/DTDs/Podcast-1.0.dtd">
-    <?php do_action('rss2_ns'); ?>>
+    <?php do_action('rss2_ns'); ?>
     <channel>
         <title><?php bloginfo_rss('name'); ?></title>
         <link href="<?php self_link(); ?>" rel="self" type="application/rss+xml" />
@@ -56,12 +56,12 @@ echo '<?xml version="1.0" encoding="'.get_option('blog_charset').'"?'.'>';
         foreach ($the_query as $post){ ?>
             <item>
                 <title><?php the_title_rss(); ?></title>
-                <description>
+                <description><![CDATA[
                     <?php
                     $content = $post->post_content;
                     $content_clean = strip_tags($content);
                     echo $content_clean;
-                    ?>
+                    ?>]]>
                 </description>
                 <itunes:author><?php echo $post->post_author ?></itunes:author>
                 <pubDate><?php echo $post->post_date ?></pubDate>
